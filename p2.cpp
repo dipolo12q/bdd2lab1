@@ -177,14 +177,25 @@ void printAlumnos(vector<Alumno> alumnos) {
     }
 }
 
+char* completeblankspaces(string str, int size) {
+    char* result = new char[size];
+    for(int i = 0; i < size; i++) {
+        result[i] = ' ';
+    }
+    for(int i = 0; i < str.length(); i++) {
+        result[i] = str[i];
+    }
+    return result;
+}
+
 int main() {
     FixedRecord fr("datos2.bin");
     cout << endl;
     Alumno a;
-    strcpy(a.codigo, "0008 ");
-    strcpy(a.nombre, "Ignacio    ");
-    strcpy(a.apellidos, "Rubio Montiel       ");
-    strcpy(a.carrera, "Computacion    ");
+    strcpy(a.codigo, completeblankspaces("0008", 5));
+    strcpy(a.nombre, completeblankspaces("Ignacio", 11));
+    strcpy(a.apellidos, completeblankspaces("Rubio Montiel", 20));
+    strcpy(a.carrera, completeblankspaces("Arte", 15));
     a.ciclo = 8;
     a.mensualidad = 4000.05f;
     // se agregan 2 ignacios
@@ -197,10 +208,10 @@ int main() {
     cout << endl;
     printAlumnos(fr.load());
     Alumno b;
-    strcpy(b.codigo, "0009 ");
-    strcpy(b.nombre, "Alejandro  ");
-    strcpy(b.apellidos, "Rubio Montiel       ");
-    strcpy(b.carrera, "Arte           ");
+    strcpy(b.codigo, completeblankspaces("0009", 5));
+    strcpy(b.nombre, completeblankspaces("Alejandro", 11));
+    strcpy(b.apellidos, completeblankspaces("Perez Pacheco", 20));
+    strcpy(b.carrera, completeblankspaces("Arte", 15));
     b.ciclo = 1;
     b.mensualidad = 8000.20f;
     cout << endl;
