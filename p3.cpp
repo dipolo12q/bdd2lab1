@@ -4,23 +4,24 @@
 #include <fstream>
 #include <cstring>
 #include <climits>
+#include <iomanip>
+#include <limits>
 
 using namespace std;
 
 struct Alumno
 {
-  char codigo [5];
-  char nombre [11];
-  char apellidos [20];
-  char carrera [15];
+  string nombre;
+  string apellidos;
+  string carrera;
+  float mensualidad;
 };
 
-
-class FixedRecord {
+class VariableRecord {
 private:
     string filename;
 public:
-    FixedRecord(string filename) {
+    VariableRecord(string filename) {
         this->filename = filename;
     }
 
@@ -38,15 +39,20 @@ public:
         }
         while(!file.eof()) {
             a = Alumno();
-            file.read((char*) &a, sizeof(Alumno));
-            file.ignore(1);
-            result.push_back(a);
+            string mensuali;
+            if(getline(file, a.nombre, '|')&&
+            getline(file, a.apellidos, '|')&&
+            getline(file, a.carrera, '|')&&
+            getline(file, mensuali)) {
+                a.mensualidad = stof(mensuali);
+                result.push_back(a);
+            }
         }
         file.close();
         return result;
     }
 
-    void add(Alumno record) {
+    void add(Alumno record){
         ofstream file(filename, ios::app);
         try {
             if(!file.is_open()) {
@@ -56,8 +62,7 @@ public:
         catch(int x) {
             cout << "Error: " << x <<". No se pudo abrir el archivo" << endl;
         }
-        file << "\n";
-        file.write((char*) &record, sizeof(Alumno));
+        file << record.nombre << "|" << record.apellidos << "|" << record.carrera << "|" << record.mensualidad << endl;
         file.close();
     }
 
@@ -72,29 +77,27 @@ public:
             cout << "Error: " << x <<". No se pudo abrir el archivo" << endl;
         }
         Alumno record;
-        file.seekg(pos * sizeof(Alumno) + 2*pos, ios::beg);
-        file.read((char*) &record, sizeof(Alumno));
+        string linepos;
+        for (int i = 1; i <= pos; i++){
+            std::getline(file, linepos);
+        }
+        string tmp;
+        stringstream ss(linepos);
+        vector<string> attributes;
+        while(getline(ss, tmp, '|')){
+            attributes.push_back(tmp);
+        }
+        record.nombre = attributes[0];
+        record.apellidos = attributes[1];
+        record.carrera = attributes[2];
+        record.mensualidad = stof(attributes[3]);
         file.close();
         return record;
     }
 };
 
 void printAlumno(Alumno alumno) {
-    for(int j = 0; j < 5; j++) {
-            cout << alumno.codigo[j];
-        }
-        cout << " ";
-            for(int j = 0; j < 11; j++) {
-            cout << alumno.nombre[j];
-        }
-        cout << " ";
-        for(int j = 0; j < 20; j++) {
-            cout << alumno.apellidos[j];
-        }
-        cout << " ";
-        for(int j = 0; j < 15; j++) {
-            cout << alumno.carrera[j];
-    }
+    cout << alumno.nombre << "|" << alumno.apellidos << "|" << alumno.carrera << "|" <<  alumno.mensualidad << endl;
     cout << endl;
 }
 
@@ -104,37 +107,19 @@ void printAlumnos(vector<Alumno> alumnos) {
     }
 }
 
-char* completeblankspaces(string str, int size) {
-    char* result = new char[size];
-    for(int i = 0; i < size; i++) {
-        result[i] = ' ';
-    }
-    for(int i = 0; i < str.length(); i++) {
-        result[i] = str[i];
-    }
-    return result;
-}
-
 int main() {
-    FixedRecord fr("datos1.txt");
+    VariableRecord fr("datos2.txt");
     cout << endl;
     Alumno a;
-    memcpy(a.codigo, completeblankspaces("0008",5), 5);
-    memcpy(a.nombre, completeblankspaces("Ignacio", 11), 11);
-    memcpy(a.apellidos, completeblankspaces("Gonzalez Montiel", 20), 20);
-    memcpy(a.carrera, completeblankspaces("Ingenieria", 15), 15);
-    /*
-    */
-    //Load y print de los records
+    a.nombre = "Ignacio";
+    a.apellidos = "Perez";
+    a.carrera = "Ingenieria en Sistemas";
+    a.mensualidad = 1000;
     printAlumnos(fr.load());
-    //Agregar a ignacio
     fr.add(a);
-    //otro load y print
     printAlumnos(fr.load());
     cout << endl;
-    //read records
-    printAlumno(fr.readRecord(0));
     printAlumno(fr.readRecord(1));
+    printAlumno(fr.readRecord(2));
     printAlumno(fr.readRecord(5));
-    printAlumno(fr.readRecord(7));
 }

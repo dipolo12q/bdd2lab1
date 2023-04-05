@@ -193,8 +193,8 @@ int main() {
     cout << endl;
     Alumno a;
     strcpy(a.codigo, completeblankspaces("0008", 5));
-    strcpy(a.nombre, completeblankspaces("Ignacio", 11));
-    strcpy(a.apellidos, completeblankspaces("Rubio Montiel", 20));
+    strcpy(a.nombre, completeblankspaces("Matthias", 11));
+    strcpy(a.apellidos, completeblankspaces("Espina Ospino", 20));
     strcpy(a.carrera, completeblankspaces("Arte", 15));
     a.ciclo = 8;
     a.mensualidad = 4000.05f;
