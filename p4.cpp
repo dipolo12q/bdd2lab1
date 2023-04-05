@@ -5,7 +5,6 @@
 
 using namespace std;
 
-// Definición de la estructura Matricula
 struct Matricula
 {
     string codigo;
@@ -16,131 +15,107 @@ struct Matricula
 
 class VariableRecord
 {
-private:
-    string filename;
-    string metadata_name;
-
 public:
-    VariableRecord(string fname, string mname) : filename(fname), metadata_name(mname)
-    {
-        ofstream fout(metadata_name, ios::out | ios::binary);
-        fout.close();
-    }
+    VariableRecord();
 
-    void add(Matricula record)
-    {
-        ofstream fout(filename, ios::out | ios::app | ios::binary);
+    void add(Matricula record);
+    Matricula readRecord(int pos);
+    vector<Matricula> load();
 
-        // Escribir el codigo
-        int len = record.codigo.length();
-        fout.write((char*)&len, sizeof(int));
-        fout.write(record.codigo.c_str(), len);
-
-        // Escribir el ciclo
-        fout.write((char*)&record.ciclo, sizeof(int));
-
-        // Escribir la mensualidad
-        fout.write((char*)&record.mensualidad, sizeof(float));
-
-        // Escribir las observaciones
-        len = record.observaciones.length();
-        fout.write((char*)&len, sizeof(int));
-        fout.write(record.observaciones.c_str(), len);
-
-        // Almacenar la información del registro en el archivo metadata
-        int pos = static_cast<int>(fout.tellp()) - (static_cast<int>(sizeof(int)) + static_cast<int>(record.codigo.length()) + static_cast<int>(sizeof(int)) + static_cast<int>(sizeof(float)) + static_cast<int>(sizeof(int)) + static_cast<int>(record.observaciones.length()));
-        fout.close();
-
-        fout.open(metadata_name, ios::out | ios::app | ios::binary);
-        fout.write((char*)&pos, sizeof(int));
-        fout.write((char*)&len, sizeof(int));
-        fout.close();
-    }
-
-    Matricula readRecord(int pos)
-    {
-        ifstream fin(filename, ios::in | ios::binary);
-        fin.seekg(pos);
-
-        // Leer el codigo
-        int len = 0;
-        fin.read((char*)&len, sizeof(int));
-        char* buffer = new char[len];
-        fin.read(buffer, len);
-        string codigo(buffer, len);
-        delete[] buffer;
-
-        // Leer el ciclo
-        int ciclo = 0;
-        fin.read((char*)&ciclo, sizeof(int));
-
-        // Leer la mensualidad
-        float mensualidad = 0.0f;
-        fin.read((char*)&mensualidad, sizeof(float));
-
-        // Leer las observaciones
-        len = 0;
-        fin.read((char*)&len, sizeof(int));
-        buffer = new char[len];
-        fin.read(buffer, len);
-        string observaciones(buffer, len);
-        delete[] buffer;
-
-        Matricula record = { codigo, ciclo, mensualidad, observaciones };
-        fin.close();
-        return record;
-    }
-
-    vector<Matricula> load()
-    {
-        vector<Matricula> records;
-
-        ifstream fin(metadata_name, ios::in | ios::binary);
-        while (!fin.eof())
-        {
-            int pos = 0;
-            fin.read((char*)&pos, sizeof(int));
-
-            int len = 0;
-            fin.read((char*)&len, sizeof(int));
-
-            if (pos != 0 && len != 0)
-            {
-                records.push_back(readRecord(pos));
-            }
-        }
-        fin.close();
-
-        return records;
-    }
+private:
+    fstream dataFile;
+    fstream metadataFile;
+    int nextPos;
 };
 
-int main()
-{
-    VariableRecord vr("matriculas.bin", "matriculas.metadata");
+VariableRecord::VariableRecord() {
+    dataFile.open("data.bin", ios::binary | ios::in | ios::out | ios::app);
+    metadataFile.open("metadata.bin", ios::binary | ios::in | ios::out | ios::app);
 
-    // Agregar registros
-    Matricula m1 = { "001", 2022, 1500.25f, "Observaciones 1" };
-    Matricula m2 = { "002", 2023, 1750.50f, "Observaciones 2" };
-    vr.add(m1);
-    vr.add(m2);
+    nextPos = 0;
+}
 
-    // Leer un registro
-    Matricula m = vr.readRecord(0);
-    cout << "Codigo: " << m.codigo << endl;
-    cout << "Ciclo: " << m.ciclo << endl;
-    cout << "Mensualidad: " << m.mensualidad << endl;
-    cout << "Observaciones: " << m.observaciones << endl;
+void VariableRecord::add(Matricula record) {
+    // Escribir los campos en el data.bin
+    int codeSize = record.codigo.size();
+    int obsSize = record.observaciones.size();
+    dataFile.write((char*)&codeSize, sizeof(codeSize));
+    dataFile.write(record.codigo.c_str(), codeSize);
+    dataFile.write((char*)&record.ciclo, sizeof(record.ciclo));
+    dataFile.write((char*)&record.mensualidad, sizeof(record.mensualidad));
+    dataFile.write((char*)&obsSize, sizeof(obsSize));
+    dataFile.write(record.observaciones.c_str(), obsSize);
 
-    // Cargar todos los registros
-    vector<Matricula> records = vr.load();
-    for (int i = 0; i < records.size(); i++)
-    {
-        cout << "Registro " << i + 1 << endl;
-        cout << "Codigo: " << records[i].codigo << endl;
-        cout << "Ciclo: " << records[i].ciclo << endl;
-        cout << "Mensualidad: " << records[i].mensualidad << endl;
-        cout << "Observaciones: " << records[i].observaciones << endl;
+    // Escribir la posición en el metadata.bin
+    metadataFile.write((char*)&nextPos, sizeof(nextPos));
+    nextPos = dataFile.tellp();
+}
+
+Matricula VariableRecord::readRecord(int pos) {
+    // Ponerl el seekg en la posición
+    dataFile.seekg(pos);
+
+    // Leer los campos del data.bin
+    int codeSize, obsSize;
+    dataFile.read((char*)&codeSize, sizeof(codeSize));
+    char* codigo = new char[codeSize + 1];
+    dataFile.read(codigo, codeSize);
+    codigo[codeSize] = '\0';
+    int ciclo;
+    dataFile.read((char*)&ciclo, sizeof(ciclo));
+    float mensualidad;
+    dataFile.read((char*)&mensualidad, sizeof(mensualidad));
+    dataFile.read((char*)&obsSize, sizeof(obsSize));
+    char* observaciones = new char[obsSize + 1];
+    dataFile.read(observaciones, obsSize);
+    observaciones[obsSize] = '\0';
+
+    // Crear y retornar el registro
+    Matricula record;
+    record.codigo = string(codigo);
+    record.ciclo = ciclo;
+    record.mensualidad = mensualidad;
+    record.observaciones = string(observaciones);
+    delete[] codigo;
+    delete[] observaciones;
+    return record;
+}
+
+vector<Matricula> VariableRecord::load() {
+    // Poner el seekg al inicio del metadata.bin
+    metadataFile.seekg(0);
+
+    // Leer cada posición y retornar los registros
+    vector<Matricula> records;
+    int pos;
+    while (metadataFile.read((char*)&pos, sizeof(pos))) {
+        records.push_back(readRecord(pos));
+    }
+
+    return records;
+}
+
+int main() {
+    VariableRecord variableRecord;
+
+    // Añadir registros
+    Matricula record1 = {"MAT001", 1, 1000.0, "Observaciones 1"};
+    Matricula record2 = {"MAT002", 2, 1500.0, "Observaciones 2"};
+    Matricula record3 = {"MAT003", 3, 2000.0, "Observaciones 3"};
+    Matricula record4 = {"MAT004", 4, 2500.0, "Observaciones 4"};
+    variableRecord.add(record1);
+    variableRecord.add(record2);
+    variableRecord.add(record3);
+    variableRecord.add(record4);
+
+    // Leer registros (se usa el readreecord dentro de load)
+    vector<Matricula> records = variableRecord.load();
+    for (Matricula& record : records) {
+        cout << "Codigo: " << record.codigo << endl;
+        cout << "Ciclo: " << record.ciclo << endl;
+        cout << "Mensualidad: " << record.mensualidad << endl;
+        cout << "Observaciones: " << record.observaciones << endl;
+        cout << endl;
     }
 
     return 0;
