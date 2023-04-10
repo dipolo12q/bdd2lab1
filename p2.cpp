@@ -188,35 +188,37 @@ char* completeblankspaces(string str, int size) {
     return result;
 }
 
+Alumno crearAlumno(vector<string> data, int Ciclo, float Mens){
+    Alumno a;
+    strcpy(a.codigo, completeblankspaces(data[0], 5));
+    strcpy(a.nombre, completeblankspaces(data[1], 11));
+    strcpy(a.apellidos, completeblankspaces(data[2], 20));
+    strcpy(a.carrera, completeblankspaces(data[3], 15));
+    a.ciclo = Ciclo;
+    a.mensualidad = Mens;
+    return a;
+}
+
 int main() {
     FixedRecord fr("datos2.bin");
     cout << endl;
-    Alumno a;
-    strcpy(a.codigo, completeblankspaces("0008", 5));
-    strcpy(a.nombre, completeblankspaces("Matthias", 11));
-    strcpy(a.apellidos, completeblankspaces("Espina Ospino", 20));
-    strcpy(a.carrera, completeblankspaces("Arte", 15));
-    a.ciclo = 8;
-    a.mensualidad = 4000.05f;
-    // se agregan 2 ignacios
-    fr.add(a);
-    fr.add(a);
+    vector<string> reg = {"0008", "Nincol", "Quiroz Maquin", "computacion"};
+    Alumno nuevo1 = crearAlumno(reg, 8, 4000.05);
+    //se agrega 2 veces un 1er alumno
+    fr.add(nuevo1);
+    fr.add(nuevo1);
     //se cargan e imprimen todos los alumnos
     printAlumnos(fr.load());
     //se borra el primer record
     fr.deleteRecord(0);
     cout << endl;
     printAlumnos(fr.load());
-    Alumno b;
-    strcpy(b.codigo, completeblankspaces("0009", 5));
-    strcpy(b.nombre, completeblankspaces("Alejandro", 11));
-    strcpy(b.apellidos, completeblankspaces("Perez Pacheco", 20));
-    strcpy(b.carrera, completeblankspaces("Arte", 15));
-    b.ciclo = 1;
-    b.mensualidad = 8000.20f;
     cout << endl;
-    // se agrega un alejandro (en donde se borro el record pos = 0)
-    fr.add(b);
+    vector<string> reg2 = {"0009", "Franco", "Pacheco Espino", "computacion"};
+    Alumno nuevo2 = crearAlumno(reg2, 1, 8000.2);
+    cout << endl;
+    // se agrega un nuevo alumno (en donde se borro el record pos = 0)
+    fr.add(nuevo2);
     // se buscan a los 2 records individualmente y se imprimer
     printAlumno(fr.readRecord(0));
     cout << endl;
