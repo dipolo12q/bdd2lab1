@@ -110,13 +110,10 @@ void printAlumnos(vector<Alumno> alumnos) {
 int main() {
     VariableRecord fr("datos2.txt");
     cout << endl;
-    Alumno a;
-    a.nombre = "Ignacio";
-    a.apellidos = "Perez";
-    a.carrera = "Ingenieria en Sistemas";
-    a.mensualidad = 1000;
+    Alumno a = {"Franco", "Pacheco", "Ingenieria de software", 1000};
     printAlumnos(fr.load());
     fr.add(a);
+    cout << endl;
     printAlumnos(fr.load());
     cout << endl;
     printAlumno(fr.readRecord(1));
