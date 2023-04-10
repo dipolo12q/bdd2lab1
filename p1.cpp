@@ -4,17 +4,29 @@
 #include <fstream>
 #include <cstring>
 #include <climits>
-
 using namespace std;
 
-struct Alumno
-{
-  char codigo [5];
-  char nombre [11];
-  char apellidos [20];
-  char carrera [15];
+struct Alumno//Record
+{	
+	char Codigo [5];
+    char Nombre [11];
+    char Apellidos [20];
+    char Carrera [15];	
 };
 
+ostream & operator << (ostream & stream, Alumno & p)
+{	
+	stream << "\n";
+	stream.write((char*) &p, sizeof(Alumno));
+	//stream << flush;
+	return stream;
+}
+
+istream & operator >> (istream & stream, Alumno & p)
+{	
+	stream.read((char*) &p, sizeof(Alumno));
+	return stream;
+}
 
 class FixedRecord {
 private:
@@ -38,7 +50,7 @@ public:
         }
         while(!file.eof()) {
             a = Alumno();
-            file.read((char*) &a, sizeof(Alumno));
+            file >> a;
             file.ignore(1);
             result.push_back(a);
         }
@@ -56,8 +68,7 @@ public:
         catch(int x) {
             cout << "Error: " << x <<". No se pudo abrir el archivo" << endl;
         }
-        file << "\n";
-        file.write((char*) &record, sizeof(Alumno));
+        file << record;
         file.close();
     }
 
@@ -73,7 +84,7 @@ public:
         }
         Alumno record;
         file.seekg(pos * sizeof(Alumno) + 2*pos, ios::beg);
-        file.read((char*) &record, sizeof(Alumno));
+        file >> record;
         file.close();
         return record;
     }
@@ -81,19 +92,19 @@ public:
 
 void printAlumno(Alumno alumno) {
     for(int j = 0; j < 5; j++) {
-            cout << alumno.codigo[j];
+            cout << alumno.Codigo[j];
         }
         cout << " ";
             for(int j = 0; j < 11; j++) {
-            cout << alumno.nombre[j];
+            cout << alumno.Nombre[j];
         }
         cout << " ";
         for(int j = 0; j < 20; j++) {
-            cout << alumno.apellidos[j];
+            cout << alumno.Apellidos[j];
         }
         cout << " ";
         for(int j = 0; j < 15; j++) {
-            cout << alumno.carrera[j];
+            cout << alumno.Carrera[j];
     }
     cout << endl;
 }
@@ -115,26 +126,38 @@ char* completeblankspaces(string str, int size) {
     return result;
 }
 
-int main() {
-    FixedRecord fr("datos1.txt");
-    cout << endl;
+Alumno crearAlumno(vector<string> data){
     Alumno a;
-    memcpy(a.codigo, completeblankspaces("0008",5), 5);
-    memcpy(a.nombre, completeblankspaces("Ignacio", 11), 11);
-    memcpy(a.apellidos, completeblankspaces("Gonzalez Montiel", 20), 20);
-    memcpy(a.carrera, completeblankspaces("Ingenieria", 15), 15);
-    /*
-    */
-    //Load y print de los records
+    strcpy(a.Codigo, completeblankspaces(data[0], 5));
+    strcpy(a.Nombre, completeblankspaces(data[1], 11));
+    strcpy(a.Apellidos, completeblankspaces(data[2], 20));
+    strcpy(a.Carrera, completeblankspaces(data[3], 15));
+    return a;
+}
+
+void testWrite(FixedRecord fr){
     printAlumnos(fr.load());
-    //Agregar a ignacio
-    fr.add(a);
-    //otro load y print
-    printAlumnos(fr.load());
+    vector<string> reg = {"0008", "Franco", "Pacheco Espino", "Computacion"};
+    Alumno nuevo = crearAlumno(reg);
+    fr.add(nuevo);
     cout << endl;
-    //read records
+    //printAlumnos(fr.load());	
+}
+
+void testRead(FixedRecord fr)
+{
+	printAlumnos(fr.load());
+    cout << endl;
     printAlumno(fr.readRecord(0));
     printAlumno(fr.readRecord(1));
     printAlumno(fr.readRecord(5));
     printAlumno(fr.readRecord(7));
+}
+
+int main()
+{
+	FixedRecord fr("datos1.txt");
+    testWrite(fr);
+	testRead(fr);
+	return 0;
 }
